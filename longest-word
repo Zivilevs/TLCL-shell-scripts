@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# longest-word: find longest string in a file
+# programname(executable) filename
+
+while [[ -n "$1" ]]; do # -n string lenght greater >0
+	if [[ -r "$1" ]]; then # file is readable
+		max_word=
+		max_len=0
+		for i in $(strings "$1"); do # tokia programele bash yra strings, cia nereikia "" nes , norim word splittable, atskiri stringai, o ne visi viename.
+#			len="$(echo -n "$i" | wc -c )" # -n evitar newlines
+# the one below is more efficient
+			len="${#i}" # strings operations and expansions
+			if (( len > max_len )); then
+				max_len="$len"
+				max_word="$i"
+			fi
+		done
+		echo "$1: '$max_word' ($max_len characters)"
+	fi
+	shift # jo reikia, kad pasibaigtu eventually while loop, kai yra positional parameters
+done

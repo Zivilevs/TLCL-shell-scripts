@@ -1,0 +1,172 @@
+#!/bin/bash 
+
+# loan-calc: script to caculate monthly loan payments
+
+PROGNAME="${0##*/}" # use parameter expansion to get basename
+
+usage () {
+	cat <<- EOF
+	Usage: $PROGNAME PRINCIPAL INTEREST MONTHS
+	Usage (optional): $PROGNAME -i (--interactive) | -h (--help) 
+
+	Where: 
+			PRINCIPAL is the amount of the loan.
+			INTEREST is the APR as a number (7% = 0.07).
+			MONTHS is the length of the loan's term.
+
+	EOF
+}
+
+principal_check () {
+
+# is principal a digit?
+if [[ "$REPLY" =~ ^[[:digit:]]+\.?[[:digit:]]+$ ]]; then
+	principal=$REPLY
+else
+	usage
+	exit 1
+fi
+return
+}
+
+
+interest_check () {
+
+# is interest a digit and is correct if greater then 50%
+
+if  [[ "$REPLY" =~ ^[0-9]+\.?[0-9]?[0-9]?$ ]]; then
+		var=$(bc<<<"$REPLY>0.5")
+		interest_check=$REPLY
+		if (($var == 1)); then
+			read -p "Is anual loan interest rate as a number is $interest_check ? (y/n/q) -->" answer
+			case $answer in
+				y | Y)	interest=$interest_check
+						;;
+				n | N)	read -p "Please enter INTEREST (APR) as a number (7% = 0.07) -> "
+						if [[ "$interest_check" =~ ^[[:digit:]]+\.?[[:digit:]]+$ ]]; then
+							interest=$interest_check
+						fi
+						;;
+				q | Q)	echo "Program terminated."
+						exit
+						;;
+			esac
+		else 
+			interest=$interest_check
+		fi
+else
+	usage
+	exit 1	
+fi
+return
+
+}
+
+months_check () {
+
+# is months parameter a number
+
+if [[ "$REPLY" =~ ^[0-9]+$ ]]; then
+	months=$REPLY
+else
+	usage
+	exit 1
+fi
+return
+
+}		
+
+calculation () {
+	bc <<- EOF
+		scale = 6
+		i = $interest / 12
+		p = $principal
+		n = $months
+		a = p * ((i * ((1 + i) ^ n)) / (((1 + i) ^ n) - 1))
+		print "$", a, "\n"
+	EOF
+
+}
+
+interactive=
+
+if (( "$#" == 1)); then 
+
+	case "$1" in
+		-i | --interactive)	interactive=1
+							;;
+		-h | --help)		usage
+							exit
+							;;
+		*)					if (($# != 3)); then
+								usage
+								exit 1
+							fi
+							;;
+	esac
+
+fi
+
+
+if [[ -n "$interactive" ]]; then
+	read -p "Enter the amount of the loan (PRINCIPAL) -> " 
+	principal_check
+	read -p "Enter the APR (INTEREST) as a number (7% = 0.07) ->"
+	interest_check
+	read -p "Enter the length of the loan in months ->"
+	months_check
+	calculation
+	exit
+fi
+
+
+
+# variables in funcions are different then in these expressions below
+
+
+# is principal a digit?
+
+if [[ "$1" =~ ^[[:digit:]]+\.?[[:digit:]]+$ ]]; then
+	principal=$1
+else
+	usage
+	exit 1
+fi
+
+# is interest a digit and is correct if greater then 50%
+
+if  [[ "$2" =~ ^[0-9]+\.?[0-9]?[0-9]?$ ]]; then
+		var=$(bc<<<"$2>0.5")
+
+		if (($var == 1)); then
+			read -p "Is anual loan interest rate as a number is $2 ? (y/n/q) -->" answer
+			case $answer in
+				y | Y)	interest=$2
+						;;
+				n | N)	read -p "Please enter INTEREST (APR) as a number (7% = 0.07) -> "
+						if [[ "$REPLY" =~ ^[[:digit:]]+\.?[[:digit:]]+$ ]]; then
+							interest=$REPLY
+						fi
+						;;
+				q | Q)	echo "Program terminated."
+						exit
+						;;
+			esac
+		else 
+			interest=$2
+		fi
+else
+	usage
+	exit 1	
+fi
+
+# is months parameter a number
+
+if [[ "$3" =~ ^[0-9]+$ ]]; then
+	months=$3
+else
+	usage
+	exit 1
+fi
+
+calculation
