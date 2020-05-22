@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# while-read: read lines from a file
+# the loop will use read to input the fields from the redirected file.
+
+while read distro version release; do
+# printf (print formatting, mostly used in scripts) "format" ( %s conversion specifiers for argument string, eina is eiles) arguments (tipo variables) tudo isso uma command, por isso \ gale.
+	printf "Distro: %s\tVersion: %s\tReleased: %s\n" \
+		"$distro" \
+		"$version" \
+		"$release"
+# until and while loop aceita Standard Input redirected after loop is done.
+done < ~/distros.txt
+
+
+# alternative with sort
+# sort -k 1,1 -k 2n distros.txt | while ....
